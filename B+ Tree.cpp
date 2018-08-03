@@ -46,7 +46,7 @@ void insertion(Key_Type k){
       while(true){
 			
 			if(inserted){
-				cout<<"condition 1"<<endl;
+				//debug: cout<<"condition 1"<<endl;
 				//if value is already inserted, need to check the conditions of parent nodes
 				//first check if this node is overflowed or not
 				temp=V[V.size()-1]; //the last node
@@ -55,7 +55,7 @@ void insertion(Key_Type k){
 				if(overflow) {
 					//overflowed need to split
 					if(temp->type_of_node == 1) {
-						cout<<"spliting for leaf node " << endl;
+						//cout:debug <<"spliting for leaf node " << endl;
 						//leaf - leaf split
 						//left split member number
 						int left_side_val = ceil((double)(n-1)/2.0);
@@ -86,7 +86,7 @@ void insertion(Key_Type k){
 						
 						//modify left side leaf
 						//pointer set
-						cout<<"creating Link to sibling " << endl;
+						//cout<<"creating Link to sibling " << endl;
 						temp->pointer[2*n-2]=notun; //last pointer will point to the right sibling
 						next_start_val = 2*left_side_val; //starting pointer
 						for(int i=next_start_val;i<(2*n-2);i=i+2){
@@ -187,7 +187,7 @@ void insertion(Key_Type k){
 					}
 					else if(temp->type_of_node == 2){
 						//non leaf
-						int left_ptr_number = ceil((double)n/2.0);
+						int left_ptr_number = ceil((double)(n+1)/2.0);
 						//creation of new node
 						Node *notun = new Node();
 						//type of node
@@ -195,7 +195,7 @@ void insertion(Key_Type k){
 						notun->tot_size=0; //init
 						int st_index=2*(left_ptr_number+1)-2; //here from pointer will start to be copied
 						//copy pointer
-						for(int j=0,cnt=left_ptr_number+1;cnt<=n;cnt++){
+						for(int j=0,cnt=left_ptr_number+1;cnt<=(n+1);cnt++){
 							notun->pointer[j]=temp->pointer[st_index];//copying the pointers
 							j=j+2; //next pointer pos
 							st_index=st_index+2;//next pointer
@@ -330,7 +330,7 @@ void insertion(Key_Type k){
 				}
 			}
 			else {
-				cout<<"condition 2"<<endl;
+				//cout<<"condition 2"<<endl;
 				//if value is not inserted traverse
 				int i=1;
 				//cheking go right condition
@@ -398,11 +398,11 @@ void insertion(Key_Type k){
 				}
 				else {
 					//condradiction found
-					cout<<"NODE VAL " << endl;
+					/*cout<<"NODE VAL " << endl;
 					for(int cnt=1,p=1;cnt<=temp->tot_size;cnt++,p=p+2){
 						cout<<temp->key[p].s<<" ";
 					}
-					cout<<endl;
+					cout<<endl;*/
 					
 					if(temp->type_of_node==1){
 						//leaf node
@@ -504,17 +504,104 @@ void print_sorted_full(Node *node){
 			for(int i=1;i<=2*(node->tot_size)-1;i=i+2){
 				cout<<node->key[i].s<<" ";
 			}
-			cout<<" ) " << endl;
+			cout<<" ) " ;
 			//sibling
 			node=node->pointer[2*n-2];
 		}
+		cout<<endl;
 	}
 }
+
+vector<Node*>saved_state[50];
+int max_level = -1;
+void print_function(Node *node,int level){
+	//debug: printf("level %d\n",level);
+	max_level = max(max_level,level);
+	if(node == NULL) return;
+	if(node->type_of_node == 1) {
+		saved_state[level].push_back(node);
+		for(int i=1;i<=2*(node->tot_size)-1;i=i+2) {
+			cout<<node->key[i].s<<" ";
+		}
+		cout<<endl;
+		if(node->pointer[2*n-2] == NULL) {
+			//all nodes been traversed 
+			/*for(int i=0;i<=level;i++){
+				cout<<"level "<<i<<" : ";
+				for(int j=0;j<(int)saved_state[i].size();j++){
+					Node *temp = saved_state[i][j];
+					cout<<" ( ";
+					for(int k=1;k<=2*(temp->tot_size)-1;k=k+2){
+						cout <<temp->key[k].s<<" ";
+					}
+					cout<<" ) ";
+				}
+				cout<<endl;
+			}*/
+		}
+		return;
+	}
+	if(node->type_of_node == 2) {
+		//non leaf node
+		saved_state[level].push_back(node);
+		for(int i=1;i<=(node->tot_size+1);i++){
+			int idx=2*i-2;
+			if(node->pointer[idx] != NULL) {
+				print_function(node->pointer[idx],level+1);
+			}
+		}
+		return;
+	}
+}
+
+bool search(Node *node,Key_Type obj){
+	bool go_right=false;
+	
+	if(node->type_of_node == 1) {
+		//leaf node
+		for(int i=1;i<=2*(node->tot_size);i=i+2){
+			if(node->key[i].s<obj.s){
+				go_right=true;
+				continue;
+			}
+			else if(node->key[i].s == obj.s){
+				return true;
+			}
+		}
+		return false;
+	}
+	else {
+		int i=1;
+		for(i=1;i<=2*(node->tot_size);i=i+2){
+			if(node->key[i].s<=obj.s) {
+				go_right=true;
+				continue;
+			}
+			else {
+				go_right=false;
+				break;
+			}
+		}
+		if(node->pointer[i-1] != NULL) {
+			return search(node->pointer[i-1],obj);
+		}
+		else{
+			int value=0;
+			assert(value != 1);
+			return false;
+		}
+	}
+}
+
+
+
 
 void menu(){
 	cout<<"1 to enter string"<<endl;
 	cout<<"2 to delete string"<<endl;
 	cout<<"3 to see tree"<<endl;
+	cout<<"4 to search"<<endl;
+	cout<<"5 to exit"<<endl;
 }
 
 int main(void){
@@ -533,19 +620,54 @@ int main(void){
 			if(cnt==1){
 				//beginning
 				initialization(obj);
-				print_sorted_full(root);
+				//print_sorted_full(root);
 			}
 			else {
 				insertion(obj);
-				print_sorted_full(root);
+				//print_sorted_full(root);
 			}
 		}
 		else if(choice==2){
 			
 		}
-		else {
+		else if(choice == 3){
 			//showing
-			print_sorted_full(root);
+			//print_sorted_full(root);
+			for(int i=0;i<30;i++){
+				saved_state[i].clear();
+			}
+			max_level = -1;
+			print_function(root,0);
+			for(int i=0;i<=max_level;i++){
+				cout<<"level "<<i<<" : ";
+				for(int j=0;j<(int)saved_state[i].size();j++){
+					Node *temp = saved_state[i][j];
+					cout<<" ( ";
+					for(int k=1;k<=2*(temp->tot_size)-1;k=k+2){
+						cout <<temp->key[k].s<<" ";
+					}
+					cout<<" ) ";
+				}
+				cout<<endl;
+			}
+		}
+		else if(choice == 4) {
+			//search
+			string check_val;
+			printf("Give check value: ");
+			cin>>check_val;
+			Key_Type obj;
+			obj.s = check_val;
+			bool ok = search(root,obj);
+			if(ok) {
+				cout<<"Found\n"<<endl;
+			}
+			else{
+				cout<<"Not Found\n"<<endl;
+			}
+		}
+		else if(choice == 5) {
+			return 0;
 		}
 	}
 }
