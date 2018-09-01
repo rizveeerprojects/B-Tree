@@ -627,7 +627,7 @@ vector<DeletionTree*> deletion_part1(struct Node *node, struct Key_Type key){
 			//making the last index(key) free
 			temp->key[2*(temp->tot_size)-1].s = ""; //no value exists
 			temp->key_condition[2*(temp->tot_size)-1]=false; //key condition set
-			temp->pointer[2*(temp->tot_size)-2]=NULL;//pointer set
+			temp->pointer[2*(temp->tot_size)-2]=NULL;//pointer set /******doubt case *******/
 			temp->tot_size--; //tot_size set
 			temp->pointer[2*n-2] = save; //sibling maintained
 			break;
@@ -722,14 +722,19 @@ void leaf_node_not_underflows(DeletionTree *last){
 //case 2: merge in leaf node with right [ called with be merged by taking elemets from right sibling]
 void leaf_merge_with_right(DeletionTree *last){
 	int start_for_called = 2*(last->called_node->tot_size)-1+2; //from this position copy will start
+	cout<<"ASEEEE "<<last->index<<endl;
+	//key pointer 
 	for(int i=start_for_called,j=1;j<=2*(last->right_sibling->tot_size)-1;j=j+2,i=i+2){
 		//key copy
 		last->called_node->key[i]=last->right_sibling->key[j];
+		cout<<last->called_node->key[i].s<<endl;
 		//key condition
 		last->called_node->key_condition[i]=true;
 		//pointer copy
 		last->called_node->pointer[i-1]=last->right_sibling->pointer[j-1];
 	}
+	
+	
 	//tot_size update
 	last->called_node->tot_size = last->called_node->tot_size + last->right_sibling->tot_size;
 	//last pointer correction
@@ -743,13 +748,18 @@ void leaf_merge_with_right(DeletionTree *last){
 	}
 	//modification in parent 
 	int index = last->index;
+	cout<<"index = " << index<<" "<<last->parent_node->tot_size<<endl;
 	for(int i=index+2;i<=2*(last->parent_node->tot_size)-1;i=i+2){
 		//key set
 		last->parent_node->key[i-2]=last->parent_node->key[i];
+		cout<<last->parent_node->key[i-2].s<<endl;
 		//key condition set
 		last->parent_node->key_condition[i-2]=true;
 		//pointer set
-		last->parent_node->pointer[i-1] = last->parent_node->pointer[i+1];  
+		last->parent_node->pointer[i-1] = last->parent_node->pointer[i+1]; 
+		if(last->parent_node->pointer[i-1] != NULL) {
+				cout<<"YES Valid"<<endl;
+		} 
 	}
 	//size decrease in parent
 	last->parent_node->tot_size--;
@@ -820,11 +830,11 @@ void redistribution_leaf_left(DeletionTree *last){
 	//shift dorkar times in right for called_node
 	for(int i=2*(last->called_node->tot_size)-1 ; i>=1; i=i-2){
 		//key shift
-		last->called_node->key[i+2]=last->called_node->key[i]; 
+		last->called_node->key[i+2*dorkar]=last->called_node->key[i]; /******************change 1 **************************/
 		//key condition
-		last->called_node->key_condition[i+2]=true;
+		last->called_node->key_condition[i+2*dorkar]=true;
 		//pointer
-		last->called_node->pointer[i+1]=last->called_node->pointer[i-1];
+		last->called_node->pointer[i+2*dorkar-1]=last->called_node->pointer[i-1];
 	}
 	//move from left_sibling
 	//dorkar times element will move
@@ -1066,7 +1076,7 @@ void redistribution_non_leaf_left(DeletionTree *last){
 	//parent update
 	last->parent_node->key[last->index-2]=last->left_sibling->key[2*last->left_sibling->tot_size-1- 2*(dorkar-1)];
 	last->left_sibling->key[2*last->left_sibling->tot_size-1- 2*(dorkar-1)].s="";
-	last->left_sibling->key_condition[2*last->left_sibling->tot_size-1- 2*(dorkar-1)]=true;
+	last->left_sibling->key_condition[2*last->left_sibling->tot_size-1- 2*(dorkar-1)]=false;
 	//tot size 
     last->left_sibling->tot_size -= dorkar;
 	return;
@@ -1127,6 +1137,7 @@ void deletion(struct Node *node,struct Key_Type key){
 					}
 					else{
 						cout<<"shit no operation can occure in leaf"<<endl;
+						break;/********change 2********/
 					}
 				}
 			}
@@ -1151,6 +1162,7 @@ void deletion(struct Node *node,struct Key_Type key){
 					continue;
 				}
 				else if(last->left_sibling != NULL && (last->called_node->tot_size+1+last->left_sibling->tot_size+1)<=n){
+					
 					//merging throwing to left
 					non_leaf_merge_with_left(last);
 					V.pop_back();
@@ -1159,6 +1171,7 @@ void deletion(struct Node *node,struct Key_Type key){
 				else {
 					if(last->right_sibling != NULL){
 						int dorkar= ceil((n+1)/2.0) - (last->called_node->tot_size+1);
+						if(dorkar == 0) break;
 						if(((last->right_sibling->tot_size+1)-dorkar) >= ceil((n/2.0))) {
 							//will take from right
 							redistribution_non_leaf_right(last);
@@ -1167,13 +1180,16 @@ void deletion(struct Node *node,struct Key_Type key){
 					}
 					else if(last->left_sibling != NULL){
 						int dorkar = ceil(n/2.0) - (last->called_node->tot_size+1);
+						if(dorkar == 0) break;
 						if(((last->left_sibling->tot_size+1)-dorkar) >= ceil((n+1)/2.0)) {
+							cout<<"DHUKE JAI"<<endl;
 							redistribution_non_leaf_left(last);
 							break;
 						}
 					}
 					else {
 						printf("shit nothing can be done in non leaf\n");
+						break;/**********cahnge 2******************/
 					}
 				}
 				
